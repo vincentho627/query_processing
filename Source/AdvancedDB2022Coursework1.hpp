@@ -52,6 +52,8 @@ public:
                   Relation const *large2, // NOLINT(bugprone-easily-swappable-parameters)
                   Relation const *small)  // NOLINT(bugprone-easily-swappable-parameters)
     {
+
+        std::cout << "hello";
         this->large1 = *large1; // you can copy the relation or just keep a pointer
         this->large2 = *large2;
         this->small = *small;
@@ -61,6 +63,23 @@ public:
         // signature, of course)
 
         // You should add your implementation here...
+
+        std::cout << "hello" << "\n";
+
+        for (int j = 0; j < getNumberOfValuesInTuple(this->large1[0]); j++) {
+            std::vector<AttributeValue> temp;
+            large1DSM.push_back(temp);
+        }
+
+        for (int j = 0; j < getNumberOfValuesInTuple(this->large2[0]); j++) {
+            std::vector<AttributeValue> temp;
+            large2DSM.push_back(temp);
+        }
+
+        for (int j = 0; j < getNumberOfValuesInTuple(this->small[0]); j++) {
+            std::vector<AttributeValue> temp;
+            smallDSM.push_back(temp);
+        }
 
         for (int i = 0; i < getNumberOfTuplesInRelation(this->large1); i++) {
             for (int j = 0; j < getNumberOfValuesInTuple(this->large1[i]); j++) {
@@ -108,36 +127,36 @@ public:
         }
 
 
-//        for (int i = 0; i < smallDSM.size(); i++) {
-//            for (int j = 0; j < getNumberOfValuesInTuple(this->small[i]); j++) {
-//                if (getAttributeValueType(this->small[i][j]) == 0) {
-//                    std::cout << (getLongValue(this->small[i][j]));
-//                } else if (getAttributeValueType(this->small[i][j]) == 1) {
-//                    std::cout << (getdoubleValue(this->small[i][j]));
-//                } else if (getAttributeValueType(this->small[i][j]) == 2) {
-//                    std::cout << (getStringValue(this->small[i][j]));
-//                } else {
-//                    // Null Pointer
-//                }
-//            }
-//        }
-//
-//        sort(smallDSM);
-//
-//
-//        for (int i = 0; i < smallDSM.size(); i++) {
-//            for (int j = 0; j < getNumberOfValuesInTuple(this->small[i]); j++) {
-//                if (getAttributeValueType(this->small[i][j]) == 0) {
-//                    std::cout << (getLongValue(this->small[i][j]));
-//                } else if (getAttributeValueType(this->small[i][j]) == 1) {
-//                    std::cout << (getdoubleValue(this->small[i][j]));
-//                } else if (getAttributeValueType(this->small[i][j]) == 2) {
-//                    std::cout << (getStringValue(this->small[i][j]));
-//                } else {
-//                    // Null Pointer
-//                }
-//            }
-//        }
+        for (int i = 0; i < smallDSM.size(); i++) {
+            for (int j = 0; j < getNumberOfValuesInTuple(this->smallDSM[i]); j++) {
+                if (getAttributeValueType(this->smallDSM[i][j]) == 0) {
+                    std::cout << (getLongValue(this->smallDSM[i][j])) << "\n";
+                } else if (getAttributeValueType(this->smallDSM[i][j]) == 1) {
+                    std::cout << (getdoubleValue(this->smallDSM[i][j])) << "\n";
+                } else if (getAttributeValueType(this->smallDSM[i][j]) == 2) {
+                    std::cout << (getStringValue(this->smallDSM[i][j])) << "\n";
+                } else {
+                    // Null Pointer
+                }
+            }
+        }
+
+        sort(smallDSM);
+
+
+        for (int i = 0; i < smallDSM.size(); i++) {
+            for (int j = 0; j < getNumberOfValuesInTuple(this->smallDSM[i]); j++) {
+                if (getAttributeValueType(this->smallDSM[i][j]) == 0) {
+                    std::cout << (getLongValue(this->smallDSM[i][j])) << "\n";
+                } else if (getAttributeValueType(this->smallDSM[i][j]) == 1) {
+                    std::cout << (getdoubleValue(this->smallDSM[i][j])) << "\n";
+                } else if (getAttributeValueType(this->smallDSM[i][j]) == 2) {
+                    std::cout << (getStringValue(this->smallDSM[i][j])) << "\n";
+                } else {
+                    // Null Pointer
+                }
+            }
+        }
 
 
     }
@@ -152,7 +171,7 @@ public:
 
 private:
     void sort(std::vector<Column> &data) {
-        mergeSort(data, 0, data.size());
+        mergeSort(data, 0, data[0].size() - 1);
     }
 
     void mergeSort(std::vector<Column> &data, int start, int end) {
@@ -191,9 +210,9 @@ private:
                 indexOfSubArrayOne++;
             }
             else {
-                data[0][indexOfMergedArray] = rightArray[indexOfSubArrayOne][0];
-                data[1][indexOfMergedArray] = rightArray[indexOfSubArrayOne][1];
-                data[2][indexOfMergedArray] = rightArray[indexOfSubArrayOne][2];
+                data[0][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][0];
+                data[1][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][1];
+                data[2][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][2];
                 indexOfSubArrayTwo++;
             }
             indexOfMergedArray++;
@@ -207,10 +226,10 @@ private:
             indexOfMergedArray++;
         }
 
-        while (indexOfSubArrayTwo < subArrayOne) {
-            data[0][indexOfMergedArray] = rightArray[indexOfSubArrayOne][0];
-            data[1][indexOfMergedArray] = rightArray[indexOfSubArrayOne][1];
-            data[2][indexOfMergedArray] = rightArray[indexOfSubArrayOne][2];
+        while (indexOfSubArrayTwo < subArrayTwo) {
+            data[0][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][0];
+            data[1][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][1];
+            data[2][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][2];
             indexOfSubArrayTwo++;
             indexOfMergedArray++;
         }
