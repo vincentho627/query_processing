@@ -193,13 +193,11 @@ private:
                             } else {
                                 rightI++;
                                 if (b[0][rightI] > a[0][leftI]) {
-                                    leftI = tempL;
                                     break;
                                 }
                             }
-
                         }
-
+                        leftI = tempL;
                     } else {
                         if (aInt < bInt) {
                             leftI++;
@@ -230,12 +228,11 @@ private:
                             } else {
                                 rightI++;
                                 if (b[0][rightI] > a[0][leftI]) {
-                                    leftI = tempL;
                                     break;
                                 }
                             }
-
                         }
+                        leftI = tempL;
                     } else {
                         if (a[0][leftI] < b[0][rightI]) {
                             leftI++;
