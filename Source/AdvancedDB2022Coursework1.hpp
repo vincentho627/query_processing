@@ -128,50 +128,26 @@ public:
             }
         }
 
-
-        for (int i = 0; i < smallDSM.size(); i++) {
-            for (int j = 0; j < getNumberOfValuesInTuple(this->smallDSM[i]); j++) {
-                if (getAttributeValueType(this->smallDSM[i][j]) == LONG_ATTRIBUTE_INDEX) {
-                    std::cout << (getLongValue(this->smallDSM[i][j])) << "\n";
-                } else if (getAttributeValueType(this->smallDSM[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
-                    std::cout << (getdoubleValue(this->smallDSM[i][j])) << "\n";
-                } else if (getAttributeValueType(this->smallDSM[i][j]) == STRING_ATTRIBUTE_INDEX) {
-                    std::cout << (getStringValue(this->smallDSM[i][j])) << "\n";
-                } else {
-                    // Null Pointer
-                }
-            }
-        }
-
-        sort(smallDSM);
-
-
-        for (int i = 0; i < smallDSM.size(); i++) {
-            for (int j = 0; j < getNumberOfValuesInTuple(this->smallDSM[i]); j++) {
-                if (getAttributeValueType(this->smallDSM[i][j]) == LONG_ATTRIBUTE_INDEX) {
-                    std::cout << (getLongValue(this->smallDSM[i][j])) << "\n";
-                } else if (getAttributeValueType(this->smallDSM[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
-                    std::cout << (getdoubleValue(this->smallDSM[i][j])) << "\n";
-                } else if (getAttributeValueType(this->smallDSM[i][j]) == STRING_ATTRIBUTE_INDEX) {
-                    std::cout << (getStringValue(this->smallDSM[i][j])) << "\n";
-                } else {
-                    // Null Pointer
-                }
-            }
-        }
-
-
     }
 
     long runQuery(long threshold = 9) {
         auto sum = 0L;
         // You should add your implementation here...
+        sort(large1DSM);
+        sort(large2DSM);
 
+        std::vector<Column> res;
+
+        mergeJoin(res, large1DSM, large2DSM);
 
         return sum;
     }
 
 private:
+    void mergeJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
+
+    }
+
     void sort(std::vector<Column> &data) {
         mergeSort(data, 0, data[0].size() - 1);
     }
