@@ -91,9 +91,6 @@ public:
                     large1DSM[j].push_back(getdoubleValue(this->large1[i][j]));
                 } else if (getAttributeValueType(this->large1[i][j]) == STRING_ATTRIBUTE_INDEX) {
                     large1DSM[j].push_back(getStringValue(this->large1[i][j]));
-                } else {
-                    // Null Pointer
-                    large1DSM[j].push_back(this->large1[i][j]);
                 }
             }
         }
@@ -106,9 +103,6 @@ public:
                     large2DSM[j].push_back(getdoubleValue(this->large2[i][j]));
                 } else if (getAttributeValueType(this->large2[i][j]) == STRING_ATTRIBUTE_INDEX) {
                     large2DSM[j].push_back(getStringValue(this->large2[i][j]));
-                } else {
-                    // Null Pointer
-                    large2DSM[j].push_back(this->large2[i][j]);
                 }
             }
         }
@@ -121,9 +115,6 @@ public:
                     smallDSM[j].push_back(getdoubleValue(this->small[i][j]));
                 } else if (getAttributeValueType(this->small[i][j]) == STRING_ATTRIBUTE_INDEX) {
                     smallDSM[j].push_back(getStringValue(this->small[i][j]));
-                } else {
-                    // Null Pointer
-                    smallDSM[j].push_back(this->small[i][j]);
                 }
             }
         }
@@ -138,13 +129,133 @@ public:
 
         std::vector<Column> res;
 
+        for (int i = 0; i < 5; i++) {
+            std::vector<AttributeValue> temp;
+            res.push_back(temp);
+        }
+
         mergeJoin(res, large1DSM, large2DSM);
+
+//        for (int i = 0; i < res[0].size(); i++) {
+//            for (int j = 0; j < 5; j++) {
+//                std::cout << res[j][i] << ", ";
+//            }
+//            std::cout << "\n";
+//        }
 
         return sum;
     }
 
 private:
     void mergeJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
+        auto leftI = 0;
+        auto rightI = 0;
+
+        // passing over the nulls
+        while (getAttributeValueType(a[0][leftI]) == 2 && getStringValue(a[0][leftI]) == getStringValue(nullptr)) {
+            leftI++;
+        }
+
+        // passing over the nulls
+        while (getAttributeValueType(b[0][rightI]) == 2 && getStringValue(b[0][rightI]) == getStringValue(nullptr)) {
+            rightI++;
+        }
+
+        while (leftI < a[0].size() && rightI < b[0].size()) {
+            if (getAttributeValueType(a[0][leftI]) == getAttributeValueType(b[0][rightI])) {
+
+                if (getAttributeValueType(a[0][leftI]) == 1) {
+                    int aInt = (int) getdoubleValue(a[leftI][0]);
+                    int bInt = (int) getdoubleValue(b[rightI][0]);
+
+                    if (aInt == bInt) {
+                        res[0].push_back(a[0][leftI]);
+                        res[1].push_back(a[1][leftI]);
+                        res[2].push_back(a[2][leftI]);
+                        res[3].push_back(b[1][rightI]);
+                        res[4].push_back(b[2][rightI]);
+
+                        auto tempL = leftI + 1;
+
+                        // check for dupes in left side
+                        while (tempL < a[0].size() && rightI < b[0].size()
+                               && getAttributeValueType(a[0][tempL]) == 1 &&
+                               getAttributeValueType(b[0][rightI]) == 1) {
+                            int tempA = (int) getdoubleValue(a[0][tempL]);
+                            int tempB = (int) getdoubleValue(b[0][rightI]);
+                            if (tempA == tempB) {
+                                res[0].push_back(a[0][tempL]);
+                                res[1].push_back(a[1][tempL]);
+                                res[2].push_back(a[2][tempL]);
+                                res[3].push_back(b[1][rightI]);
+                                res[4].push_back(b[2][rightI]);
+                                tempL++;
+                            } else {
+                                rightI++;
+                                if (b[0][rightI] > a[0][leftI]) {
+                                    leftI = tempL;
+                                    break;
+                                }
+                            }
+
+                        }
+
+                    } else {
+                        if (aInt < bInt) {
+                            leftI++;
+                        } else {
+                            rightI++;
+                        }
+                    }
+
+                } else {
+                    if (a[0][leftI] == b[0][rightI]) {
+                        res[0].push_back(a[0][leftI]);
+                        res[1].push_back(a[1][leftI]);
+                        res[2].push_back(a[2][leftI]);
+                        res[3].push_back(b[1][rightI]);
+                        res[4].push_back(b[2][rightI]);
+
+                        auto tempL = leftI + 1;
+
+                        // check for dupes in left side
+                        while (tempL < a[0].size() && rightI < b[0].size()) {
+                            if (a[0][tempL] == b[0][rightI]) {
+                                res[0].push_back(a[0][tempL]);
+                                res[1].push_back(a[1][tempL]);
+                                res[2].push_back(a[2][tempL]);
+                                res[3].push_back(b[1][rightI]);
+                                res[4].push_back(b[2][rightI]);
+                                tempL++;
+                            } else {
+                                rightI++;
+                                if (b[0][rightI] > a[0][leftI]) {
+                                    leftI = tempL;
+                                    break;
+                                }
+                            }
+
+                        }
+                    } else {
+                        if (a[0][leftI] < b[0][rightI]) {
+                            leftI++;
+                        } else {
+                            rightI++;
+                        }
+                    }
+
+
+                }
+
+            } else {
+                if (getAttributeValueType(a[0][leftI]) < getAttributeValueType(b[0][rightI])) {
+                    leftI++;
+                } else {
+                    rightI++;
+                }
+            }
+        }
+
 
     }
 
