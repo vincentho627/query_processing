@@ -1,5 +1,8 @@
 #ifndef ADVANCEDDB2022COURSEWORK1_H
 #define ADVANCEDDB2022COURSEWORK1_H
+#define LONG_ATTRIBUTE_INDEX 0
+#define DOUBLE_ATTRIBUTE_INDEX 1
+#define STRING_ATTRIBUTE_INDEX 2
 
 #include <array>
 #include <cstdlib>
@@ -14,7 +17,7 @@ using Relation = std::vector<Tuple>;
 using Column = std::vector<AttributeValue>;
 
 /**
- * 0 islong, 1 is double, 2 is a c-string
+ * 0 is long, 1 is double, 2 is a c-string
  */
 inline size_t getAttributeValueType(AttributeValue const &value) { return value.index(); }
 
@@ -53,7 +56,6 @@ public:
                   Relation const *small)  // NOLINT(bugprone-easily-swappable-parameters)
     {
 
-        std::cout << "hello";
         this->large1 = *large1; // you can copy the relation or just keep a pointer
         this->large2 = *large2;
         this->small = *small;
@@ -83,11 +85,11 @@ public:
 
         for (int i = 0; i < getNumberOfTuplesInRelation(this->large1); i++) {
             for (int j = 0; j < getNumberOfValuesInTuple(this->large1[i]); j++) {
-                if (getAttributeValueType(this->large1[i][j]) == 0) {
+                if (getAttributeValueType(this->large1[i][j]) == LONG_ATTRIBUTE_INDEX) {
                     large1DSM[j].push_back(getLongValue(this->large1[i][j]));
-                } else if (getAttributeValueType(this->large1[i][j]) == 1) {
+                } else if (getAttributeValueType(this->large1[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
                     large1DSM[j].push_back(getdoubleValue(this->large1[i][j]));
-                } else if (getAttributeValueType(this->large1[i][j]) == 2) {
+                } else if (getAttributeValueType(this->large1[i][j]) == STRING_ATTRIBUTE_INDEX) {
                     large1DSM[j].push_back(getStringValue(this->large1[i][j]));
                 } else {
                     // Null Pointer
@@ -98,11 +100,11 @@ public:
 
         for (int i = 0; i < getNumberOfTuplesInRelation(this->large2); i++) {
             for (int j = 0; j < getNumberOfValuesInTuple(this->large2[i]); j++) {
-                if (getAttributeValueType(this->large2[i][j]) == 0) {
+                if (getAttributeValueType(this->large2[i][j]) == LONG_ATTRIBUTE_INDEX) {
                     large2DSM[j].push_back(getLongValue(this->large2[i][j]));
-                } else if (getAttributeValueType(this->large2[i][j]) == 1) {
+                } else if (getAttributeValueType(this->large2[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
                     large2DSM[j].push_back(getdoubleValue(this->large2[i][j]));
-                } else if (getAttributeValueType(this->large2[i][j]) == 2) {
+                } else if (getAttributeValueType(this->large2[i][j]) == STRING_ATTRIBUTE_INDEX) {
                     large2DSM[j].push_back(getStringValue(this->large2[i][j]));
                 } else {
                     // Null Pointer
@@ -113,11 +115,11 @@ public:
 
         for (int i = 0; i < getNumberOfTuplesInRelation(this->small); i++) {
             for (int j = 0; j < getNumberOfValuesInTuple(this->small[i]); j++) {
-                if (getAttributeValueType(this->small[i][j]) == 0) {
+                if (getAttributeValueType(this->small[i][j]) == LONG_ATTRIBUTE_INDEX) {
                     smallDSM[j].push_back(getLongValue(this->small[i][j]));
-                } else if (getAttributeValueType(this->small[i][j]) == 1) {
+                } else if (getAttributeValueType(this->small[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
                     smallDSM[j].push_back(getdoubleValue(this->small[i][j]));
-                } else if (getAttributeValueType(this->small[i][j]) == 2) {
+                } else if (getAttributeValueType(this->small[i][j]) == STRING_ATTRIBUTE_INDEX) {
                     smallDSM[j].push_back(getStringValue(this->small[i][j]));
                 } else {
                     // Null Pointer
@@ -129,11 +131,11 @@ public:
 
         for (int i = 0; i < smallDSM.size(); i++) {
             for (int j = 0; j < getNumberOfValuesInTuple(this->smallDSM[i]); j++) {
-                if (getAttributeValueType(this->smallDSM[i][j]) == 0) {
+                if (getAttributeValueType(this->smallDSM[i][j]) == LONG_ATTRIBUTE_INDEX) {
                     std::cout << (getLongValue(this->smallDSM[i][j])) << "\n";
-                } else if (getAttributeValueType(this->smallDSM[i][j]) == 1) {
+                } else if (getAttributeValueType(this->smallDSM[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
                     std::cout << (getdoubleValue(this->smallDSM[i][j])) << "\n";
-                } else if (getAttributeValueType(this->smallDSM[i][j]) == 2) {
+                } else if (getAttributeValueType(this->smallDSM[i][j]) == STRING_ATTRIBUTE_INDEX) {
                     std::cout << (getStringValue(this->smallDSM[i][j])) << "\n";
                 } else {
                     // Null Pointer
@@ -146,11 +148,11 @@ public:
 
         for (int i = 0; i < smallDSM.size(); i++) {
             for (int j = 0; j < getNumberOfValuesInTuple(this->smallDSM[i]); j++) {
-                if (getAttributeValueType(this->smallDSM[i][j]) == 0) {
+                if (getAttributeValueType(this->smallDSM[i][j]) == LONG_ATTRIBUTE_INDEX) {
                     std::cout << (getLongValue(this->smallDSM[i][j])) << "\n";
-                } else if (getAttributeValueType(this->smallDSM[i][j]) == 1) {
+                } else if (getAttributeValueType(this->smallDSM[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
                     std::cout << (getdoubleValue(this->smallDSM[i][j])) << "\n";
-                } else if (getAttributeValueType(this->smallDSM[i][j]) == 2) {
+                } else if (getAttributeValueType(this->smallDSM[i][j]) == STRING_ATTRIBUTE_INDEX) {
                     std::cout << (getStringValue(this->smallDSM[i][j])) << "\n";
                 } else {
                     // Null Pointer
@@ -199,7 +201,7 @@ private:
             rightArray.push_back(Tuple{data[0][mid + 1 + j], data[1][mid + 1 + j], data[2][mid + 1 + j]});
 
         auto indexOfSubArrayOne = 0,
-        indexOfSubArrayTwo = 0;
+                indexOfSubArrayTwo = 0;
         int indexOfMergedArray = start;
 
         while (indexOfSubArrayOne < subArrayOne && indexOfSubArrayTwo < subArrayTwo) {
@@ -208,8 +210,7 @@ private:
                 data[1][indexOfMergedArray] = leftArray[indexOfSubArrayOne][1];
                 data[2][indexOfMergedArray] = leftArray[indexOfSubArrayOne][2];
                 indexOfSubArrayOne++;
-            }
-            else {
+            } else {
                 data[0][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][0];
                 data[1][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][1];
                 data[2][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][2];
