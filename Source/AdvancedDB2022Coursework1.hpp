@@ -142,17 +142,34 @@ public:
         mergeJoin(res, large1DSM, large2DSM);
         hashJoin(res2, res, smallDSM);
 
-//        for (int i = 0; i < res[0].size(); i++) {
-//            for (int j = 0; j < 5; j++) {
-//                std::cout << res[j][i] << ", ";
-//            }
-//            std::cout << "\n";
-//        }
+        printDSM(res2);
 
         return sum;
     }
 
 private:
+
+    void printDSM(std::vector<Column> dsm) {
+        for (size_t i = 0; i < dsm[0].size(); i++) {
+            for (auto & j : dsm) {
+                auto dsmValue = j[i];
+                switch (getAttributeValueType(dsmValue)) {
+                    case LONG_ATTRIBUTE_INDEX:
+                        std::cout << getLongValue(dsmValue) << ",";
+                        break;
+                    case DOUBLE_ATTRIBUTE_INDEX:
+                        std::cout << getdoubleValue(dsmValue) << ",";
+                        break;
+                    case STRING_ATTRIBUTE_INDEX:
+                        if (getStringValue(dsmValue) == getStringValue(nullptr)) {
+                            std::cout << "NULL" << ",";
+                        }
+                        std::cout << getStringValue(dsmValue) << ",";
+                }
+            }
+            std::cout << "\n";
+        }
+    }
 
     /* Hash function that returns -1 if input is invalid. */
     static inline long hash(AttributeValue input) {
