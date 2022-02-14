@@ -67,8 +67,6 @@ public:
 
         // You should add your implementation here...
 
-        std::cout << "hello" << "\n";
-
         for (int j = 0; j < getNumberOfValuesInTuple(this->large1[0]); j++) {
             std::vector<AttributeValue> temp;
             large1DSM.push_back(temp);
@@ -149,6 +147,51 @@ public:
     }
 
 private:
+
+    /* Hash function that returns -1 if input is invalid. */
+    static inline long hash(AttributeValue input) {
+        long hashValue;
+        switch (getAttributeValueType(input)) {
+            case LONG_ATTRIBUTE_INDEX:
+                hashValue = getLongValue(input) % 10;
+                break;
+            case DOUBLE_ATTRIBUTE_INDEX:
+                hashValue = ((long) getdoubleValue(input)) % 10;
+                break;
+            case STRING_ATTRIBUTE_INDEX:
+                if (getStringValue(input) == getStringValue(nullptr)) {
+                    return -1; // NULL entry
+                }
+                hashValue = ((long) *getStringValue(input)) % 10;
+                break;
+            default:
+                hashValue = -1;
+        }
+
+        return hashValue;
+    }
+
+    static inline bool attributesAreEqual(AttributeValue a, AttributeValue b) {
+        if (getAttributeValueType(a) != getAttributeValueType(b))
+            return false;
+
+        switch(getAttributeValueType(a)) {
+            case LONG_ATTRIBUTE_INDEX:
+                return getLongValue(a) == getLongValue(b);
+            case DOUBLE_ATTRIBUTE_INDEX:
+                return (long) getdoubleValue(a) == (long) getdoubleValue(b);
+            case STRING_ATTRIBUTE_INDEX:
+                // Nulls are cast to string
+                if (getStringValue(a) == getStringValue(nullptr) ||
+                    getStringValue(b) == getStringValue(nullptr))
+                    return false;
+
+                return getStringValue(a) == getStringValue(b);
+            default:
+                return false;
+        }
+    }
+
     void hashJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
         std::vector<std::tuple<int, int>> hashtable(10); // tuple of <type, value>
 
@@ -158,8 +201,13 @@ private:
 
         // Build hashtable on the first column
         for (size_t i = 0; i < b[0].size(); i++) {
-            auto input = getLongValue(b[0][i]);
-            auto hashValue = input % 10; // assumes only long values for now TODO
+
+            auto input = b[0][i];
+            long hashValue = hash(input);
+            if (hashValue == -1) {
+                continue;
+            }
+
             while (std::get<0>(hashtable.at(hashValue)) != -1) // Fetch type -1 = empty slot
                 hashValue = (++hashValue % 10);
             hashtable[hashValue] = std::tuple<int, int>(LONG_ATTRIBUTE_INDEX, i); // store index of column
@@ -167,16 +215,21 @@ private:
 
         // Probe hashtable
         for (size_t i = 0; i < a[0].size(); i++) {
-            auto probeInput = getLongValue(a[0][i]);
-            auto hashValue = probeInput % 10;
+
+            auto probeInput = a[0][i];
+            long hashValue = hash(probeInput);
+
+            if (hashValue == -1) {
+                continue;
+            }
 
             while (std::get<0>(hashtable[hashValue]) != -1) { // Checks for valid entry
                 while (std::get<0>(hashtable[hashValue]) == -1 &&
-                       getLongValue(b[0][std::get<1>(hashtable[hashValue])]) != probeInput) // Check if b's entry matches a's input
+                       !attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) // Check if b's entry matches a's input
                     hashValue = (++hashValue % 10);
 
-                if (getLongValue(b[0][std::get<1>(hashtable[hashValue])]) == probeInput) {
-                    std::cout << probeInput << std::endl;
+                if (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
+                    std::cout << getLongValue(probeInput) << std::endl;
                 }
 
                 hashValue = (++hashValue % 10);
