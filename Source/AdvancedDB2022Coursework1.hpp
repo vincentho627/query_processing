@@ -127,14 +127,20 @@ public:
         sort(large2DSM);
 
         std::vector<Column> res; // {a, b1, c1, b2, c2}
+        std::vector<Column> res2; // {a, b1, c1, b2, c2, b3, c3}
 
         for (int i = 0; i < 5; i++) {
             std::vector<AttributeValue> temp;
             res.push_back(temp);
         }
 
+        for (int i = 0; i < 7; i++) {
+            std::vector<AttributeValue> temp;
+            res2.push_back(temp);
+        }
+
         mergeJoin(res, large1DSM, large2DSM);
-        hashJoin(res, large2DSM, smallDSM);
+        hashJoin(res2, res, smallDSM);
 
 //        for (int i = 0; i < res[0].size(); i++) {
 //            for (int j = 0; j < 5; j++) {
@@ -229,7 +235,13 @@ private:
                     hashValue = (++hashValue % 10);
 
                 if (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
-                    std::cout << getLongValue(probeInput) << std::endl;
+                    res[0].push_back(a[0][i]); // res.a
+                    res[1].push_back(a[1][i]); // res.b1
+                    res[2].push_back(a[2][i]); // res.c1
+                    res[3].push_back(a[3][i]); // res.b2
+                    res[4].push_back(a[4][i]); // res.c2
+                    res[5].push_back(b[1][std::get<1>(hashtable[hashValue])]); // small.b
+                    res[6].push_back(b[2][std::get<1>(hashtable[hashValue])]); // small.c
                 }
 
                 hashValue = (++hashValue % 10);
