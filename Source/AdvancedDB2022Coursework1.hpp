@@ -9,6 +9,7 @@
 #include <tuple>
 #include <variant>
 #include <vector>
+
 #include <iostream>
 // YOU MAY NOT ADD ANY OTHER INCLUDES!!!
 using AttributeValue = std::variant<long, double, char const *>;
@@ -127,7 +128,7 @@ public:
         sort(large1DSM);
         sort(large2DSM);
 
-        std::vector<Column> res;
+        std::vector<Column> res; // {a, b1, c1, b2, c2}
 
         for (int i = 0; i < 5; i++) {
             std::vector<AttributeValue> temp;
@@ -135,6 +136,7 @@ public:
         }
 
         mergeJoin(res, large1DSM, large2DSM);
+        hashJoin(res, large2DSM, smallDSM);
 
 //        for (int i = 0; i < res[0].size(); i++) {
 //            for (int j = 0; j < 5; j++) {
@@ -147,6 +149,41 @@ public:
     }
 
 private:
+    void hashJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
+        std::vector<std::tuple<int, int>> hashtable(10); // tuple of <type, value>
+
+        // Initialise hashtable
+        for (size_t i = 0; i < 10; i++)
+            hashtable.at(i) = std::tuple<int, int>(-1, -1);
+
+        // Build hashtable on the first column
+        for (size_t i = 0; i < b[0].size(); i++) {
+            auto input = getLongValue(b[0][i]);
+            auto hashValue = input % 10; // assumes only long values for now TODO
+            while (std::get<0>(hashtable.at(hashValue)) != -1) // Fetch type -1 = empty slot
+                hashValue = (++hashValue % 10);
+            hashtable[hashValue] = std::tuple<int, int>(LONG_ATTRIBUTE_INDEX, i); // store index of column
+        }
+
+        // Probe hashtable
+        for (size_t i = 0; i < a[0].size(); i++) {
+            auto probeInput = getLongValue(a[0][i]);
+            auto hashValue = probeInput % 10;
+
+            while (std::get<0>(hashtable[hashValue]) != -1) { // Checks for valid entry
+                while (std::get<0>(hashtable[hashValue]) == -1 &&
+                       getLongValue(b[0][std::get<1>(hashtable[hashValue])]) != probeInput) // Check if b's entry matches a's input
+                    hashValue = (++hashValue % 10);
+
+                if (getLongValue(b[0][std::get<1>(hashtable[hashValue])]) == probeInput) {
+                    std::cout << probeInput << std::endl;
+                }
+
+                hashValue = (++hashValue % 10);
+            }
+        }
+    }
+
     void mergeJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
         auto leftI = 0;
         auto rightI = 0;
