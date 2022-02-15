@@ -210,7 +210,7 @@ private:
     }
 
     /* Hash function that returns -1 if input is invalid. */
-    static inline long hash(AttributeValue input, unsigned long hashtableSize) {
+    static long hash(AttributeValue input, unsigned long hashtableSize) {
         long hashValue;
         switch (getAttributeValueType(input)) {
             case LONG_ATTRIBUTE_INDEX:
@@ -232,7 +232,7 @@ private:
         return hashValue;
     }
 
-    static inline bool attributesAreEqual(AttributeValue a, AttributeValue b) {
+    static bool attributesAreEqual(AttributeValue a, AttributeValue b) {
         if (getAttributeValueType(a) != getAttributeValueType(b))
             return false;
 
@@ -275,7 +275,7 @@ private:
         for (size_t i = 0; i < b[0].size(); i++) {
 
             auto input = b[0][i];
-            long hashValue = hash(input, hashtableSize);
+            int hashValue = hash(input, hashtableSize);
             if (hashValue == -1) {
                 continue;
             }
@@ -289,23 +289,24 @@ private:
         for (size_t i = 0; i < a[0].size(); i++) {
 
             auto probeInput = a[0][i];
-            long hashValue = hash(probeInput, hashtableSize);
+            int hashValue = hash(probeInput, hashtableSize);
 
             if (hashValue == -1) {
                 continue;
             }
 
-            while (std::get<0>(hashtable[hashValue]) != -1) { // Checks for valid entry
-                while (std::get<0>(hashtable[hashValue]) == -1 &&
-                       !attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) // Check if b's entry matches a's input
-                    hashValue = (++hashValue & (hashtableSize - 1));
-
-                if (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
+            while (std::get<0>(hashtable[hashValue]) != -1) {
+                while (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
                     res[0].push_back(a[0][i]); // res.a
                     res[1].push_back(a[1][i]); // res.b1
                     res[2].push_back(a[2][i]); // res.c1
                     res[3].push_back(b[1][std::get<1>(hashtable[hashValue])]); // res.b3
                     res[4].push_back(b[2][std::get<1>(hashtable[hashValue])]); // res.c3
+                    hashValue = (++hashValue & (hashtableSize - 1));
+                }
+
+                if (!attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
+                    break;
                 }
 
                 hashValue = (++hashValue & (hashtableSize - 1));
