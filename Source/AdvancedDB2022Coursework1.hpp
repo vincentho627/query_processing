@@ -187,7 +187,7 @@ public:
 
 private:
 
-    void printDSM(std::vector<Column> dsm) {
+    static void printDSM(std::vector<Column> dsm) {
         for (size_t i = 0; i < dsm[0].size(); i++) {
             for (auto & j : dsm) {
                 auto dsmValue = j[i];
@@ -253,7 +253,7 @@ private:
         }
     }
 
-    void hashJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
+    static void hashJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
         unsigned long hashtableSize = b[0].size() * 4;
 
         std::vector<std::tuple<int, int>> hashtable(hashtableSize); // tuple of <type, value>
@@ -304,7 +304,7 @@ private:
         }
     }
 
-    void mergeJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
+    static void mergeJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
         auto leftI = 0;
         auto rightI = 0;
 
@@ -326,8 +326,8 @@ private:
             if (getAttributeValueType(a[0][leftI]) == getAttributeValueType(b[0][rightI])) {
 
                 if (getAttributeValueType(a[0][leftI]) == 1) {
-                    int aInt = (int) getdoubleValue(a[leftI][0]);
-                    int bInt = (int) getdoubleValue(b[rightI][0]);
+                    long aInt = (long) getdoubleValue(a[0][leftI]);
+                    long bInt = (long) getdoubleValue(b[0][rightI]);
 
                     if (aInt == bInt) {
                         res[0].push_back(a[0][leftI]); // a
@@ -344,8 +344,8 @@ private:
                         while (tempL < a[0].size() && rightI < b[0].size()
                                && getAttributeValueType(a[0][tempL]) == 1 &&
                                getAttributeValueType(b[0][rightI]) == 1) {
-                            int tempA = (int) getdoubleValue(a[0][tempL]);
-                            int tempB = (int) getdoubleValue(b[0][rightI]);
+                            long tempA = (long) getdoubleValue(a[0][tempL]);
+                            long tempB = (long) getdoubleValue(b[0][rightI]);
                             if (tempA == tempB) {
                                 res[0].push_back(a[0][tempL]);
                                 res[1].push_back(a[1][tempL]);
@@ -425,11 +425,11 @@ private:
 
     }
 
-    void sort(std::vector<Column> &data) {
+    static void sort(std::vector<Column> &data) {
         mergeSort(data, 0, data[0].size() - 1);
     }
 
-    void mergeSort(std::vector<Column> &data, int start, int end) {
+    static void mergeSort(std::vector<Column> &data, int start, int end) {
         if (start >= end)
             return;
 
@@ -439,7 +439,7 @@ private:
         merge(data, start, mid, end);
     }
 
-    void merge(std::vector<Column> &data, int start, int mid, int end) {
+    static void merge(std::vector<Column> &data, int start, int mid, int end) {
         auto const subArrayOne = mid - start + 1;
         auto const subArrayTwo = end - mid;
 
