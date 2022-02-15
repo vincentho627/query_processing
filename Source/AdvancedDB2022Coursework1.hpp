@@ -214,16 +214,16 @@ private:
         long hashValue;
         switch (getAttributeValueType(input)) {
             case LONG_ATTRIBUTE_INDEX:
-                hashValue = getLongValue(input) % hashtableSize;
+                hashValue = getLongValue(input) & (hashtableSize - 1);
                 break;
             case DOUBLE_ATTRIBUTE_INDEX:
-                hashValue = ((long) getdoubleValue(input)) % hashtableSize;
+                hashValue = ((long) getdoubleValue(input)) & (hashtableSize - 1);
                 break;
             case STRING_ATTRIBUTE_INDEX:
                 if (getStringValue(input) == getStringValue(nullptr)) {
                     return -1; // NULL entry
                 }
-                hashValue = ((long) *getStringValue(input)) % hashtableSize;
+                hashValue = ((long) *getStringValue(input)) & (hashtableSize - 1);
                 break;
             default:
                 hashValue = -1;
@@ -253,8 +253,17 @@ private:
         }
     }
 
+    static int calculateHashtableSize(int n) {
+        int count = 0;
+        while (n > 0) {
+            n = n >> 1;
+            count += 1;
+        }
+        return 1 << (count + 2); // Over-allocate by a factor of 4
+    }
+
     static void hashJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
-        unsigned long hashtableSize = b[0].size() * 4;
+        int hashtableSize = calculateHashtableSize(b[0].size());
 
         std::vector<std::tuple<int, int>> hashtable(hashtableSize); // tuple of <type, value>
 
@@ -272,7 +281,7 @@ private:
             }
 
             while (std::get<0>(hashtable.at(hashValue)) != -1) // Fetch type -1 = empty slot
-                hashValue = (++hashValue % hashtableSize);
+                hashValue = (++hashValue & (hashtableSize - 1));
             hashtable[hashValue] = std::tuple<int, int>(LONG_ATTRIBUTE_INDEX, i); // store index of column
         }
 
@@ -289,7 +298,7 @@ private:
             while (std::get<0>(hashtable[hashValue]) != -1) { // Checks for valid entry
                 while (std::get<0>(hashtable[hashValue]) == -1 &&
                        !attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) // Check if b's entry matches a's input
-                    hashValue = (++hashValue % hashtableSize);
+                    hashValue = (++hashValue & (hashtableSize - 1));
 
                 if (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
                     res[0].push_back(a[0][i]); // res.a
@@ -299,7 +308,7 @@ private:
                     res[4].push_back(b[2][std::get<1>(hashtable[hashValue])]); // res.c3
                 }
 
-                hashValue = (++hashValue % hashtableSize);
+                hashValue = (++hashValue & (hashtableSize - 1));
             }
         }
     }
