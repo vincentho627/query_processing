@@ -126,8 +126,8 @@ public:
         sort(large1DSM);
         sort(large2DSM);
 
-        std::vector<Column> res; // {a, b1, c1, b2, c2}
-        std::vector<Column> res2; // {a, b1, c1, b2, c2, b3, c3}
+        std::vector<Column> res; // {a, b1, c1, b3, c3}
+        std::vector<Column> res2; // {a, b1, c1, b3, c3, b2, c2}
 
         for (int i = 0; i < 5; i++) {
             std::vector<AttributeValue> temp;
@@ -139,8 +139,8 @@ public:
             res2.push_back(temp);
         }
 
-        mergeJoin(res, large1DSM, large2DSM);
-        hashJoin(res2, res, smallDSM);
+        hashJoin(res, large1DSM, smallDSM);
+        mergeJoin(res2, res, large2DSM);
 
         printDSM(res2);
 
@@ -255,10 +255,8 @@ private:
                     res[0].push_back(a[0][i]); // res.a
                     res[1].push_back(a[1][i]); // res.b1
                     res[2].push_back(a[2][i]); // res.c1
-                    res[3].push_back(a[3][i]); // res.b2
-                    res[4].push_back(a[4][i]); // res.c2
-                    res[5].push_back(b[1][std::get<1>(hashtable[hashValue])]); // small.b
-                    res[6].push_back(b[2][std::get<1>(hashtable[hashValue])]); // small.c
+                    res[3].push_back(b[1][std::get<1>(hashtable[hashValue])]); // res.b3
+                    res[4].push_back(b[2][std::get<1>(hashtable[hashValue])]); // res.c3
                 }
 
                 hashValue = (++hashValue % 10);
@@ -288,11 +286,13 @@ private:
                     int bInt = (int) getdoubleValue(b[rightI][0]);
 
                     if (aInt == bInt) {
-                        res[0].push_back(a[0][leftI]);
-                        res[1].push_back(a[1][leftI]);
-                        res[2].push_back(a[2][leftI]);
-                        res[3].push_back(b[1][rightI]);
-                        res[4].push_back(b[2][rightI]);
+                        res[0].push_back(a[0][leftI]); // a
+                        res[1].push_back(a[1][leftI]); // b1
+                        res[2].push_back(a[2][leftI]); // c1
+                        res[3].push_back(a[3][leftI]); // b3
+                        res[4].push_back(a[4][leftI]); // c3
+                        res[5].push_back(b[1][rightI]); // b2
+                        res[6].push_back(b[2][rightI]); // c2
 
                         auto tempL = leftI + 1;
 
@@ -306,8 +306,10 @@ private:
                                 res[0].push_back(a[0][tempL]);
                                 res[1].push_back(a[1][tempL]);
                                 res[2].push_back(a[2][tempL]);
-                                res[3].push_back(b[1][rightI]);
-                                res[4].push_back(b[2][rightI]);
+                                res[3].push_back(a[3][tempL]); // b3
+                                res[4].push_back(a[4][tempL]); // c3
+                                res[5].push_back(b[1][rightI]); // b2
+                                res[6].push_back(b[2][rightI]); // c2
                                 tempL++;
                             } else {
                                 rightI++;
@@ -330,8 +332,10 @@ private:
                         res[0].push_back(a[0][leftI]);
                         res[1].push_back(a[1][leftI]);
                         res[2].push_back(a[2][leftI]);
-                        res[3].push_back(b[1][rightI]);
-                        res[4].push_back(b[2][rightI]);
+                        res[3].push_back(a[3][leftI]); // b3
+                        res[4].push_back(a[4][leftI]); // c3
+                        res[5].push_back(b[1][rightI]); // b2
+                        res[6].push_back(b[2][rightI]); // c2
 
                         auto tempL = leftI + 1;
 
@@ -341,8 +345,10 @@ private:
                                 res[0].push_back(a[0][tempL]);
                                 res[1].push_back(a[1][tempL]);
                                 res[2].push_back(a[2][tempL]);
-                                res[3].push_back(b[1][rightI]);
-                                res[4].push_back(b[2][rightI]);
+                                res[3].push_back(a[3][tempL]); // b3
+                                res[4].push_back(a[4][tempL]); // c3
+                                res[5].push_back(b[1][rightI]); // b2
+                                res[6].push_back(b[2][rightI]); // c2
                                 tempL++;
                             } else {
                                 rightI++;
