@@ -142,8 +142,6 @@ public:
         hashJoin(res, large1DSM, smallDSM);
         mergeJoin(res2, res, large2DSM);
 
-        printDSM(res2);
-
         for (size_t i = 0; i < res2[0].size(); i++) {
             long current_b_sum = 0;
             for (size_t j = 1; j < res2.size(); j += 2) {
