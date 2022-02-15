@@ -141,6 +141,7 @@ public:
             res2.push_back(temp);
         }
 
+        sort(smallDSM);
         hashJoin(res3, large2DSM, smallDSM);
         hashJoin(res, large1DSM, smallDSM);
 
@@ -210,7 +211,7 @@ private:
     }
 
     /* Hash function that returns -1 if input is invalid. */
-    static long hash(AttributeValue input, unsigned long hashtableSize) {
+    static inline long hash(AttributeValue input, unsigned long hashtableSize) {
         long hashValue;
         switch (getAttributeValueType(input)) {
             case LONG_ATTRIBUTE_INDEX:
@@ -232,28 +233,35 @@ private:
         return hashValue;
     }
 
-    static bool attributesAreEqual(AttributeValue a, AttributeValue b) {
-        if (getAttributeValueType(a) != getAttributeValueType(b))
+    static inline bool attributesAreEqual(AttributeValue a, AttributeValue b) {
+
+        size_t typeA = getAttributeValueType(a);
+        size_t typeB = getAttributeValueType(b);
+
+        if (typeA != typeB)
             return false;
 
-        switch(getAttributeValueType(a)) {
+        switch(typeA) {
             case LONG_ATTRIBUTE_INDEX:
                 return getLongValue(a) == getLongValue(b);
             case DOUBLE_ATTRIBUTE_INDEX:
                 return (long) getdoubleValue(a) == (long) getdoubleValue(b);
             case STRING_ATTRIBUTE_INDEX:
                 // Nulls are cast to string
-                if (getStringValue(a) == getStringValue(nullptr) ||
-                    getStringValue(b) == getStringValue(nullptr))
+                auto strA = getStringValue(a);
+                auto strB = getStringValue(a);
+
+                if (strA == getStringValue(nullptr) ||
+                    strB == getStringValue(nullptr))
                     return false;
 
-                return getStringValue(a) == getStringValue(b);
-            default:
-                return false;
+                return strA == strB;
         }
+
+        return false;
     }
 
-    static int calculateHashtableSize(int n) {
+    static inline int calculateHashtableSize(int n) {
         int count = 0;
         while (n > 0) {
             n = n >> 1;
@@ -295,6 +303,8 @@ private:
                 continue;
             }
 
+            bool foundFirstInstance = false;
+
             while (std::get<0>(hashtable[hashValue]) != -1) {
                 while (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
                     res[0].push_back(a[0][i]); // res.a
@@ -303,9 +313,10 @@ private:
                     res[3].push_back(b[1][std::get<1>(hashtable[hashValue])]); // res.b3
                     res[4].push_back(b[2][std::get<1>(hashtable[hashValue])]); // res.c3
                     hashValue = (++hashValue & (hashtableSize - 1));
+                    foundFirstInstance = true;
                 }
 
-                if (!attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
+                if (foundFirstInstance && !attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
                     break;
                 }
 
