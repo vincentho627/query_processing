@@ -144,6 +144,39 @@ public:
 
         printDSM(res2);
 
+        for (size_t i = 0; i < res2[0].size(); i++) {
+            long current_b_sum = 0;
+            for (size_t j = 1; j < res2.size(); j += 2) {
+                switch (getAttributeValueType(res2[j][i])) {
+                    case LONG_ATTRIBUTE_INDEX:
+                        current_b_sum += getLongValue(res2[j][i]);
+                        break;
+                    case DOUBLE_ATTRIBUTE_INDEX:
+                        current_b_sum += (long) getdoubleValue(res2[j][i]);
+                        break;
+                    default:
+                        current_b_sum += 0;
+                }
+            }
+
+            if (current_b_sum > threshold) {
+                long current_c_multiple = 1;
+                for (size_t j = 2; j < res2.size(); j += 2) {
+                    switch (getAttributeValueType(res2[j][i])) {
+                        case LONG_ATTRIBUTE_INDEX:
+                            current_c_multiple *= getLongValue(res2[j][i]);
+                            break;
+                        case DOUBLE_ATTRIBUTE_INDEX:
+                            current_c_multiple *= (long) getdoubleValue(res2[j][i]);
+                            break;
+                        default:
+                            current_c_multiple += 0;
+                    }
+                }
+                sum += current_c_multiple;
+            }
+        }
+
         return sum;
     }
 
