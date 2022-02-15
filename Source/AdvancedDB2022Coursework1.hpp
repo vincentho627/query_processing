@@ -210,20 +210,20 @@ private:
     }
 
     /* Hash function that returns -1 if input is invalid. */
-    static inline long hash(AttributeValue input) {
+    static inline long hash(AttributeValue input, unsigned long hashtableSize) {
         long hashValue;
         switch (getAttributeValueType(input)) {
             case LONG_ATTRIBUTE_INDEX:
-                hashValue = getLongValue(input) % 10;
+                hashValue = getLongValue(input) % hashtableSize;
                 break;
             case DOUBLE_ATTRIBUTE_INDEX:
-                hashValue = ((long) getdoubleValue(input)) % 10;
+                hashValue = ((long) getdoubleValue(input)) % hashtableSize;
                 break;
             case STRING_ATTRIBUTE_INDEX:
                 if (getStringValue(input) == getStringValue(nullptr)) {
                     return -1; // NULL entry
                 }
-                hashValue = ((long) *getStringValue(input)) % 10;
+                hashValue = ((long) *getStringValue(input)) % hashtableSize;
                 break;
             default:
                 hashValue = -1;
@@ -266,7 +266,7 @@ private:
         for (size_t i = 0; i < b[0].size(); i++) {
 
             auto input = b[0][i];
-            long hashValue = hash(input);
+            long hashValue = hash(input, hashtableSize);
             if (hashValue == -1) {
                 continue;
             }
@@ -280,7 +280,7 @@ private:
         for (size_t i = 0; i < a[0].size(); i++) {
 
             auto probeInput = a[0][i];
-            long hashValue = hash(probeInput);
+            long hashValue = hash(probeInput, hashtableSize);
 
             if (hashValue == -1) {
                 continue;
