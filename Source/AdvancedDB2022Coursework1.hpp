@@ -123,15 +123,17 @@ public:
     long runQuery(long threshold = 9) {
         auto sum = 0L;
         // You should add your implementation here...
-        sort(large1DSM);
-        sort(large2DSM);
 
         std::vector<Column> res; // {a, b1, c1, b3, c3}
         std::vector<Column> res2; // {a, b1, c1, b3, c3, b2, c2}
+        std::vector<Column> res3; // {a, b2, c2, b3, c3}
 
         for (int i = 0; i < 5; i++) {
             std::vector<AttributeValue> temp;
             res.push_back(temp);
+
+            std::vector<AttributeValue> temp2;
+            res3.push_back(temp2);
         }
 
         for (int i = 0; i < 7; i++) {
@@ -139,8 +141,13 @@ public:
             res2.push_back(temp);
         }
 
+        hashJoin(res3, large2DSM, smallDSM);
         hashJoin(res, large1DSM, smallDSM);
-        mergeJoin(res2, res, large2DSM);
+
+        sort(res);
+        sort(res3);
+
+        mergeJoin(res2, res, res3);
 
         for (size_t i = 0; i < res2[0].size(); i++) {
             long current_b_sum = 0;
@@ -247,10 +254,12 @@ private:
     }
 
     void hashJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
-        std::vector<std::tuple<int, int>> hashtable(10); // tuple of <type, value>
+        unsigned long hashtableSize = b[0].size() * 4;
+
+        std::vector<std::tuple<int, int>> hashtable(hashtableSize); // tuple of <type, value>
 
         // Initialise hashtable
-        for (size_t i = 0; i < 10; i++)
+        for (size_t i = 0; i < hashtableSize; i++)
             hashtable.at(i) = std::tuple<int, int>(-1, -1);
 
         // Build hashtable on the first column
@@ -263,7 +272,7 @@ private:
             }
 
             while (std::get<0>(hashtable.at(hashValue)) != -1) // Fetch type -1 = empty slot
-                hashValue = (++hashValue % 10);
+                hashValue = (++hashValue % hashtableSize);
             hashtable[hashValue] = std::tuple<int, int>(LONG_ATTRIBUTE_INDEX, i); // store index of column
         }
 
@@ -280,7 +289,7 @@ private:
             while (std::get<0>(hashtable[hashValue]) != -1) { // Checks for valid entry
                 while (std::get<0>(hashtable[hashValue]) == -1 &&
                        !attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) // Check if b's entry matches a's input
-                    hashValue = (++hashValue % 10);
+                    hashValue = (++hashValue % hashtableSize);
 
                 if (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
                     res[0].push_back(a[0][i]); // res.a
@@ -290,7 +299,7 @@ private:
                     res[4].push_back(b[2][std::get<1>(hashtable[hashValue])]); // res.c3
                 }
 
-                hashValue = (++hashValue % 10);
+                hashValue = (++hashValue % hashtableSize);
             }
         }
     }
@@ -298,6 +307,10 @@ private:
     void mergeJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
         auto leftI = 0;
         auto rightI = 0;
+
+        if (a[0].empty() || b[0].empty()) {
+            return;
+        }
 
         // passing over the nulls
         while (getAttributeValueType(a[0][leftI]) == 2 && getStringValue(a[0][leftI]) == getStringValue(nullptr)) {
