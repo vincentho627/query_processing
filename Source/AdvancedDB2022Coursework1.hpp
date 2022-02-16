@@ -209,7 +209,7 @@ private:
             case LONG_ATTRIBUTE_INDEX:
                 return getLongValue(a) == getLongValue(b);
             case DOUBLE_ATTRIBUTE_INDEX:
-                return (long) getdoubleValue(a) == (long) getdoubleValue(b);
+                return doubleToLong(getdoubleValue(a)) == doubleToLong(getdoubleValue(b));
             case STRING_ATTRIBUTE_INDEX:
                 // Nulls are cast to string
                 auto strA = getStringValue(a);
@@ -228,12 +228,15 @@ private:
     /* Hash function that returns -1 if input is invalid. */
     static inline long hash(AttributeValue input, unsigned long hashtableSize) {
         long hashValue;
+
+        /* Calculate modulo by using bitwise AND. Hashtable size must be
+         * multiple of two! */
         switch (getAttributeValueType(input)) {
             case LONG_ATTRIBUTE_INDEX:
                 hashValue = getLongValue(input) & (hashtableSize - 1);
                 break;
             case DOUBLE_ATTRIBUTE_INDEX:
-                hashValue = ((long) getdoubleValue(input)) & (hashtableSize - 1);
+                hashValue = doubleToLong(getdoubleValue(input)) & (hashtableSize - 1);
                 break;
             case STRING_ATTRIBUTE_INDEX:
                 if (getStringValue(input) == getStringValue(nullptr)) {
@@ -248,36 +251,40 @@ private:
         return hashValue;
     }
 
+    /* Calculates the smallest power of two larger than size provided. */
     static inline int calculateHashtableSize(int n) {
         int count = 0;
         while (n > 0) {
             n = n >> 1;
             count += 1;
         }
-        return 1 << (count + 2); // Over-allocate by a factor of 4
+        return 1 << count;
     }
 
+    /* Hashes relation b and joins with relation a, then puts result in res. */
     static void hashJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
-        int hashtableSize = calculateHashtableSize(b[0].size());
+        // Over-allocate hashtable by 4
+        int hashtableSize = calculateHashtableSize(b[0].size()) << 2;
 
-        std::vector<std::tuple<int, int>> hashtable(hashtableSize); // tuple of <type, value>
+        // Stores tuple of <Slot occupied, Index in original table>
+        std::vector<std::tuple<bool, int>> hashtable(hashtableSize);
 
         // Initialise hashtable
         for (size_t i = 0; i < hashtableSize; i++)
-            hashtable.at(i) = std::tuple<int, int>(-1, -1);
+            hashtable[i] = std::tuple<bool, int>(false, -1);
 
         // Build hashtable on the first column
         for (size_t i = 0; i < b[0].size(); i++) {
 
-            auto input = b[0][i];
-            int hashValue = hash(input, hashtableSize);
+            AttributeValue input = b[0][i];
+            long hashValue = hash(input, hashtableSize);
             if (hashValue == -1) {
                 continue;
             }
 
-            while (std::get<0>(hashtable.at(hashValue)) != -1) // Fetch type -1 = empty slot
+            while (std::get<0>(hashtable[hashValue]))
                 hashValue = (++hashValue & (hashtableSize - 1));
-            hashtable[hashValue] = std::tuple<int, int>(LONG_ATTRIBUTE_INDEX, i); // store index of column
+            hashtable[hashValue] = std::tuple<bool, int>(true, i); // store index of column
         }
 
         // Probe hashtable
@@ -290,7 +297,7 @@ private:
                 continue;
             }
 
-            while (std::get<0>(hashtable[hashValue]) != -1) {
+            while (std::get<0>(hashtable[hashValue])) {
                 while (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
                     res[0].push_back(a[0][i]); // res.a
                     res[1].push_back(a[1][i]); // res.b1
