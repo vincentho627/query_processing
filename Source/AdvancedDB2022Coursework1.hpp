@@ -290,23 +290,25 @@ private:
         // Probe hashtable
         for (size_t i = 0; i < a[0].size(); i++) {
 
-            auto probeInput = a[0][i];
-            int hashValue = hash(probeInput, hashtableSize);
-
+            AttributeValue probeInput = a[0][i];
+            long hashValue = hash(probeInput, hashtableSize);
             if (hashValue == -1) {
                 continue;
             }
 
+            // Only stop once we reach an empty slot, since there could be
+            // duplicates further down the chain.
             while (std::get<0>(hashtable[hashValue])) {
-                while (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
+                int index = std::get<1>(hashtable[hashValue]);
+
+                if (attributesAreEqual(b[0][index], probeInput)) {
                     res[0].push_back(a[0][i]); // res.a
                     res[1].push_back(a[1][i]); // res.b1
                     res[2].push_back(a[2][i]); // res.c1
                     res[3].push_back(a[3][i]); // res.b2
                     res[4].push_back(a[4][i]); // res.c2
-                    res[5].push_back(b[1][std::get<1>(hashtable[hashValue])]); // res.b3
-                    res[6].push_back(b[2][std::get<1>(hashtable[hashValue])]); // res.c3
-                    hashValue = (++hashValue & (hashtableSize - 1));
+                    res[5].push_back(b[1][index]); // res.b3
+                    res[6].push_back(b[2][index]); // res.c3
                 }
 
                 hashValue = (++hashValue & (hashtableSize - 1));
