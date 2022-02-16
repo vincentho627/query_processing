@@ -61,6 +61,10 @@ public:
         this->large2 = *large2;
         this->small = *small;
 
+        std::qsort(&this->small[0], this->small.size(), sizeof(Tuple), compareTuples);
+        std::qsort(&this->large1[0], this->large1.size(), sizeof(Tuple), compareTuples);
+        std::qsort(&this->large2[0], this->large2.size(), sizeof(Tuple), compareTuples);
+
         // here is some example code for the exatraction of values feel free to
         // access the data any way you like (without changing the function
         // signature, of course)
@@ -126,14 +130,10 @@ public:
 
         std::vector<Column> res; // {a, b1, c1, b3, c3}
         std::vector<Column> res2; // {a, b1, c1, b3, c3, b2, c2}
-        std::vector<Column> res3; // {a, b2, c2, b3, c3}
 
         for (int i = 0; i < 5; i++) {
             std::vector<AttributeValue> temp;
             res.push_back(temp);
-
-            std::vector<AttributeValue> temp2;
-            res3.push_back(temp2);
         }
 
         for (int i = 0; i < 7; i++) {
@@ -141,14 +141,8 @@ public:
             res2.push_back(temp);
         }
 
-        sort(smallDSM);
-        hashJoin(res3, large2DSM, smallDSM);
-        hashJoin(res, large1DSM, smallDSM);
-
-        sort(res);
-        sort(res3);
-
-        mergeJoin(res2, res, res3);
+        mergeJoin(res, large1DSM, large2DSM);
+        hashJoin(res2, res, smallDSM);
 
         for (size_t i = 0; i < res2[0].size(); i++) {
             long current_b_sum = 0;
@@ -208,6 +202,38 @@ private:
             }
             std::cout << "\n";
         }
+    }
+
+    static int compareTuples(const void *t1, const void *t2) {
+        AttributeValue a = (*(Tuple *) t1)[0];
+        AttributeValue b = (*(Tuple *) t2)[0];
+
+        size_t typeA = getAttributeValueType(a);
+        size_t typeB = getAttributeValueType(b);
+
+        if (typeA < typeB) return -1;
+        if (typeA > typeB) return 1;
+
+        switch(typeA) {
+            case LONG_ATTRIBUTE_INDEX:
+                if (getLongValue(a) < getLongValue(b)) return -1;
+                if (getLongValue(a) == getLongValue(b)) return 0;
+                if (getLongValue(a) > getLongValue(b)) return 1;
+            case DOUBLE_ATTRIBUTE_INDEX:
+                if ((long) getdoubleValue(a) < (long) getdoubleValue(b)) return -1;
+                if ((long) getdoubleValue(a) == (long) getdoubleValue(b)) return 0;
+                if ((long) getdoubleValue(a) > (long) getdoubleValue(b)) return 1;
+            case STRING_ATTRIBUTE_INDEX:
+                // Nulls are cast to string
+                auto strA = getStringValue(a);
+                auto strB = getStringValue(a);
+
+                if (strA < strB) return -1;
+                if (strA == strB) return 0;
+                if (strA > strB) return 1;
+        }
+
+        return false;
     }
 
     /* Hash function that returns -1 if input is invalid. */
@@ -310,8 +336,10 @@ private:
                     res[0].push_back(a[0][i]); // res.a
                     res[1].push_back(a[1][i]); // res.b1
                     res[2].push_back(a[2][i]); // res.c1
-                    res[3].push_back(b[1][std::get<1>(hashtable[hashValue])]); // res.b3
-                    res[4].push_back(b[2][std::get<1>(hashtable[hashValue])]); // res.c3
+                    res[3].push_back(a[3][i]); // res.b2
+                    res[4].push_back(a[4][i]); // res.c2
+                    res[5].push_back(b[1][std::get<1>(hashtable[hashValue])]); // res.b3
+                    res[6].push_back(b[2][std::get<1>(hashtable[hashValue])]); // res.c3
                     hashValue = (++hashValue & (hashtableSize - 1));
                     foundFirstInstance = true;
                 }
@@ -354,10 +382,8 @@ private:
                         res[0].push_back(a[0][leftI]); // a
                         res[1].push_back(a[1][leftI]); // b1
                         res[2].push_back(a[2][leftI]); // c1
-                        res[3].push_back(a[3][leftI]); // b3
-                        res[4].push_back(a[4][leftI]); // c3
-                        res[5].push_back(b[1][rightI]); // b2
-                        res[6].push_back(b[2][rightI]); // c2
+                        res[3].push_back(b[1][rightI]); // b2
+                        res[4].push_back(b[2][rightI]); // c2
 
                         auto tempL = leftI + 1;
 
@@ -371,10 +397,8 @@ private:
                                 res[0].push_back(a[0][tempL]);
                                 res[1].push_back(a[1][tempL]);
                                 res[2].push_back(a[2][tempL]);
-                                res[3].push_back(a[3][tempL]); // b3
-                                res[4].push_back(a[4][tempL]); // c3
-                                res[5].push_back(b[1][rightI]); // b2
-                                res[6].push_back(b[2][rightI]); // c2
+                                res[3].push_back(b[1][rightI]); // b2
+                                res[4].push_back(b[2][rightI]); // c2
                                 tempL++;
                             } else {
                                 rightI++;
@@ -397,10 +421,8 @@ private:
                         res[0].push_back(a[0][leftI]);
                         res[1].push_back(a[1][leftI]);
                         res[2].push_back(a[2][leftI]);
-                        res[3].push_back(a[3][leftI]); // b3
-                        res[4].push_back(a[4][leftI]); // c3
-                        res[5].push_back(b[1][rightI]); // b2
-                        res[6].push_back(b[2][rightI]); // c2
+                        res[3].push_back(b[1][rightI]); // b2
+                        res[4].push_back(b[2][rightI]); // c2
 
                         auto tempL = leftI + 1;
 
@@ -410,10 +432,8 @@ private:
                                 res[0].push_back(a[0][tempL]);
                                 res[1].push_back(a[1][tempL]);
                                 res[2].push_back(a[2][tempL]);
-                                res[3].push_back(a[3][tempL]); // b3
-                                res[4].push_back(a[4][tempL]); // c3
-                                res[5].push_back(b[1][rightI]); // b2
-                                res[6].push_back(b[2][rightI]); // c2
+                                res[3].push_back(b[1][rightI]); // b2
+                                res[4].push_back(b[2][rightI]); // c2
                                 tempL++;
                             } else {
                                 rightI++;
@@ -446,69 +466,6 @@ private:
 
     }
 
-    static void sort(std::vector<Column> &data) {
-        mergeSort(data, 0, data[0].size() - 1);
-    }
-
-    static void mergeSort(std::vector<Column> &data, int start, int end) {
-        if (start >= end)
-            return;
-
-        auto mid = start + (end - start) / 2;
-        mergeSort(data, start, mid);
-        mergeSort(data, mid + 1, end);
-        merge(data, start, mid, end);
-    }
-
-    static void merge(std::vector<Column> &data, int start, int mid, int end) {
-        auto const subArrayOne = mid - start + 1;
-        auto const subArrayTwo = end - mid;
-
-        std::vector<Tuple> leftArray;
-        std::vector<Tuple> rightArray;
-
-        leftArray.reserve(subArrayOne);
-        for (auto i = 0; i < subArrayOne; i++)
-            leftArray.push_back(Tuple{data[0][start + i], data[1][start + i], data[2][start + i]});
-        rightArray.reserve(subArrayTwo);
-        for (auto j = 0; j < subArrayTwo; j++)
-            rightArray.push_back(Tuple{data[0][mid + 1 + j], data[1][mid + 1 + j], data[2][mid + 1 + j]});
-
-        auto indexOfSubArrayOne = 0,
-                indexOfSubArrayTwo = 0;
-        int indexOfMergedArray = start;
-
-        while (indexOfSubArrayOne < subArrayOne && indexOfSubArrayTwo < subArrayTwo) {
-            if (leftArray[indexOfSubArrayOne] <= rightArray[indexOfSubArrayTwo]) {
-                data[0][indexOfMergedArray] = leftArray[indexOfSubArrayOne][0];
-                data[1][indexOfMergedArray] = leftArray[indexOfSubArrayOne][1];
-                data[2][indexOfMergedArray] = leftArray[indexOfSubArrayOne][2];
-                indexOfSubArrayOne++;
-            } else {
-                data[0][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][0];
-                data[1][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][1];
-                data[2][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][2];
-                indexOfSubArrayTwo++;
-            }
-            indexOfMergedArray++;
-        }
-
-        while (indexOfSubArrayOne < subArrayOne) {
-            data[0][indexOfMergedArray] = leftArray[indexOfSubArrayOne][0];
-            data[1][indexOfMergedArray] = leftArray[indexOfSubArrayOne][1];
-            data[2][indexOfMergedArray] = leftArray[indexOfSubArrayOne][2];
-            indexOfSubArrayOne++;
-            indexOfMergedArray++;
-        }
-
-        while (indexOfSubArrayTwo < subArrayTwo) {
-            data[0][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][0];
-            data[1][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][1];
-            data[2][indexOfMergedArray] = rightArray[indexOfSubArrayTwo][2];
-            indexOfSubArrayTwo++;
-            indexOfMergedArray++;
-        }
-    }
 };
 
 class DBMSImplementationForCompetition : public DBMSImplementationForMarks {
