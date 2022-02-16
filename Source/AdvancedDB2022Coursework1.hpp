@@ -189,12 +189,35 @@ class DBMSImplementationForMarks {
         AttributeValue a = (*(Tuple *) t1)[0];
         AttributeValue b = (*(Tuple *) t2)[0];
 
-        return attributesAreEqual(a, b);
+        return compareAttributes(a, b);
+    }
+
+    /* Compares equality of two attributes, taking into account their types.
+     * Note that this function is very similar to compareAttributes, but is
+     * faster since it only has to check for equality and no need to check for
+     * an ordering. */
+    static inline bool attributesAreEqual(AttributeValue a, AttributeValue b) {
+        size_t typeA = getAttributeValueType(a);
+        size_t typeB = getAttributeValueType(b);
+
+        if (typeA != typeB) return false;
+
+        switch (typeA) {
+            case LONG_ATTRIBUTE_INDEX:
+                return getLongValue(a) == getLongValue(b);
+            case DOUBLE_ATTRIBUTE_INDEX:
+                return doubleToLong(getdoubleValue(a))
+                    == doubleToLong(getdoubleValue(b));
+            case STRING_ATTRIBUTE_INDEX:
+                return getStringValue(a) == getStringValue(b);
+        }
+
+        return false;
     }
 
     /* Compares two attributes, taking into account their types.
      * Returns -1 if a < b, 0 if a == b, 1 if a > b */
-    static inline int attributesAreEqual(AttributeValue a, AttributeValue b) {
+    static inline int compareAttributes(AttributeValue a, AttributeValue b) {
         size_t typeA = getAttributeValueType(a);
         size_t typeB = getAttributeValueType(b);
 
@@ -307,10 +330,7 @@ class DBMSImplementationForMarks {
             while (std::get<0>(hashtable[hashValue])) {
                 int index = std::get<1>(hashtable[hashValue]);
 
-                // A faster comparator function can potentially be used here,
-                // at the cost of code duplication since the function here
-                // checks for an ordering instead of just equality.
-                if (attributesAreEqual(b[0][index], probeInput) == 0) {
+                if (attributesAreEqual(b[0][index], probeInput)) {
                     res[0].push_back(a[0][i]); // res.a
                     res[1].push_back(a[1][i]); // res.b1
                     res[2].push_back(a[2][i]); // res.c1
@@ -349,100 +369,50 @@ class DBMSImplementationForMarks {
 
         // Step through both relations to try and merge them
         while (leftI < a[0].size() && rightI < b[0].size()) {
-            if (getAttributeValueType(a[0][leftI])
-                == getAttributeValueType(b[0][rightI])) {
 
-                if (getAttributeValueType(a[0][leftI]) == 1) {
-                    long aInt = (long) getdoubleValue(a[0][leftI]);
-                    long bInt = (long) getdoubleValue(b[0][rightI]);
+            AttributeValue leftInput = a[0][leftI];
+            AttributeValue rightInput = b[0][rightI];
 
-                    if (aInt == bInt) {
-                        res[0].push_back(a[0][leftI]); // a
-                        res[1].push_back(a[1][leftI]); // b1
-                        res[2].push_back(a[2][leftI]); // c1
-                        res[3].push_back(b[1][rightI]); // b2
-                        res[4].push_back(b[2][rightI]); // c2
-
-                        auto tempL = leftI + 1;
-
-                        // check for dupes in left side
-                        while (tempL < a[0].size() && rightI < b[0].size()
-                            && getAttributeValueType(a[0][tempL]) == 1 &&
-                            getAttributeValueType(b[0][rightI]) == 1) {
-                            long tempA = (long) getdoubleValue(a[0][tempL]);
-                            long tempB = (long) getdoubleValue(b[0][rightI]);
-                            if (tempA == tempB) {
-                                res[0].push_back(a[0][tempL]);
-                                res[1].push_back(a[1][tempL]);
-                                res[2].push_back(a[2][tempL]);
-                                res[3].push_back(b[1][rightI]); // b2
-                                res[4].push_back(b[2][rightI]); // c2
-                                tempL++;
-                            } else {
-                                rightI++;
-                                if (b[0][rightI] > a[0][leftI]) {
-                                    break;
-                                }
-                            }
-                        }
-                        leftI = tempL;
-                    } else {
-                        if (aInt < bInt) {
-                            leftI++;
-                        } else {
-                            rightI++;
-                        }
-                    }
-
-                } else {
-                    if (a[0][leftI] == b[0][rightI]) {
-                        res[0].push_back(a[0][leftI]);
-                        res[1].push_back(a[1][leftI]);
-                        res[2].push_back(a[2][leftI]);
-                        res[3].push_back(b[1][rightI]); // b2
-                        res[4].push_back(b[2][rightI]); // c2
-
-                        auto tempL = leftI + 1;
-
-                        // check for dupes in left side
-                        while (tempL < a[0].size() && rightI < b[0].size()) {
-                            if (a[0][tempL] == b[0][rightI]) {
-                                res[0].push_back(a[0][tempL]);
-                                res[1].push_back(a[1][tempL]);
-                                res[2].push_back(a[2][tempL]);
-                                res[3].push_back(b[1][rightI]); // b2
-                                res[4].push_back(b[2][rightI]); // c2
-                                tempL++;
-                            } else {
-                                rightI++;
-                                if (b[0][rightI] > a[0][leftI]) {
-                                    break;
-                                }
-                            }
-                        }
-                        leftI = tempL;
-                    } else {
-                        if (a[0][leftI] < b[0][rightI]) {
-                            leftI++;
-                        } else {
-                            rightI++;
-                        }
-                    }
-
-                }
-
-            } else {
-                if (getAttributeValueType(a[0][leftI])
-                    < getAttributeValueType(b[0][rightI])) {
+            switch (compareAttributes(leftInput, rightInput)) {
+                case -1: // a < b
                     leftI++;
-                } else {
+                    break;
+                case 1: // a > b
                     rightI++;
-                }
+                    break;
+                case 0:
+                    // Add to results
+                    res[0].push_back(a[0][leftI]); // a
+                    res[1].push_back(a[1][leftI]); // b1
+                    res[2].push_back(a[2][leftI]); // c1
+                    res[3].push_back(b[1][rightI]); // b2
+                    res[4].push_back(b[2][rightI]); // c2
+
+                    auto tempL = leftI + 1;
+
+                    // Check for duplicates in left side
+                    while (tempL < a[0].size() && rightI < b[0].size()) {
+                        if (attributesAreEqual(a[0][tempL], b[0][rightI])) {
+                            res[0].push_back(a[0][tempL]);
+                            res[1].push_back(a[1][tempL]);
+                            res[2].push_back(a[2][tempL]);
+                            res[3].push_back(b[1][rightI]); // b2
+                            res[4].push_back(b[2][rightI]); // c2
+                            tempL++;
+                        } else {
+                            // Here, all duplicates in the left has been traversed
+                            // so we advance the right pointer and continue.
+                            rightI++;
+                            if (b[0][rightI] > a[0][leftI]) {
+                                break;
+                            }
+                        }
+                    }
+                    leftI = tempL;
+                    break;
             }
         }
-
     }
-
 };
 
 class DBMSImplementationForCompetition : public DBMSImplementationForMarks {
