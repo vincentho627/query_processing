@@ -9,8 +9,6 @@
 #include <tuple>
 #include <variant>
 #include <vector>
-
-#include <iostream>
 // YOU MAY NOT ADD ANY OTHER INCLUDES!!!
 using AttributeValue = std::variant<long, double, char const *>;
 using Tuple = std::vector<AttributeValue>;
@@ -41,8 +39,7 @@ inline size_t getNumberOfTuplesInRelation(Relation const &t) { return t.size(); 
  * large1.a = large2.a and large2.a = small.a and large1.b + large2.b + small.b
  * > 9;
  */
-class DBMSImplementationForMarks { // you may edit anything inside this class
-    // but nothing else
+class DBMSImplementationForMarks {
     Relation large1;
     Relation large2;
     Relation small;
@@ -57,19 +54,15 @@ public:
                   Relation const *small)  // NOLINT(bugprone-easily-swappable-parameters)
     {
 
-        this->large1 = *large1; // you can copy the relation or just keep a pointer
+        this->large1 = *large1;
         this->large2 = *large2;
         this->small = *small;
 
+        /* Pre-sort large1 and large2 to use for sort-merge-join later on. */
         std::qsort(&this->large1[0], this->large1.size(), sizeof(Tuple), compareTuples);
         std::qsort(&this->large2[0], this->large2.size(), sizeof(Tuple), compareTuples);
 
-        // here is some example code for the exatraction of values feel free to
-        // access the data any way you like (without changing the function
-        // signature, of course)
-
-        // You should add your implementation here...
-
+        /* Initialise DSM representations of relations. */
         for (int j = 0; j < getNumberOfValuesInTuple(this->large1[0]); j++) {
             std::vector<AttributeValue> temp;
             large1DSM.push_back(temp);
@@ -85,6 +78,7 @@ public:
             smallDSM.push_back(temp);
         }
 
+        /* Build DSM representations. */
         for (int i = 0; i < getNumberOfTuplesInRelation(this->large1); i++) {
             for (int j = 0; j < getNumberOfValuesInTuple(this->large1[i]); j++) {
                 if (getAttributeValueType(this->large1[i][j]) == LONG_ATTRIBUTE_INDEX) {
@@ -125,8 +119,10 @@ public:
 
     long runQuery(long threshold = 9) {
         auto sum = 0L;
-        // You should add your implementation here...
 
+        /* Initialise DSM representation of intermediate states.
+         * Since we know we are only concerned with the first 3 attributes
+         * of the table, we can hardcode the size of the DSM. */
         std::vector<Column> res; // {a, b1, c1, b3, c3}
         std::vector<Column> res2; // {a, b1, c1, b3, c3, b2, c2}
 
@@ -134,15 +130,16 @@ public:
             std::vector<AttributeValue> temp;
             res.push_back(temp);
         }
-
         for (int i = 0; i < 7; i++) {
             std::vector<AttributeValue> temp;
             res2.push_back(temp);
         }
 
+        /* Sort-merge join the large tables and hash-join the smaller table. */
         mergeJoin(res, large1DSM, large2DSM);
         hashJoin(res2, res, smallDSM);
 
+        /* Calculate result of query. */
         for (size_t i = 0; i < res2[0].size(); i++) {
             long current_b_sum = 0;
             for (size_t j = 1; j < res2.size(); j += 2)
@@ -161,28 +158,12 @@ public:
 
 private:
 
-    static void printDSM(std::vector<Column> dsm) {
-        for (size_t i = 0; i < dsm[0].size(); i++) {
-            for (auto & j : dsm) {
-                auto dsmValue = j[i];
-                switch (getAttributeValueType(dsmValue)) {
-                    case LONG_ATTRIBUTE_INDEX:
-                        std::cout << getLongValue(dsmValue) << ",";
-                        break;
-                    case DOUBLE_ATTRIBUTE_INDEX:
-                        std::cout << getdoubleValue(dsmValue) << ",";
-                        break;
-                    case STRING_ATTRIBUTE_INDEX:
-                        if (getStringValue(dsmValue) == getStringValue(nullptr)) {
-                            std::cout << "NULL" << ",";
-                        }
-                        std::cout << getStringValue(dsmValue) << ",";
-                }
-            }
-            std::cout << "\n";
-        }
+    /* Rounds a double to a long. */
+    static inline long doubleToLong(double n) {
+        return (long) (n > 0 ? n + 0.5 : n - 0.5);
     }
 
+    /* Comparator function used to sort N-ary storage relations. */
     static inline int compareTuples(const void *t1, const void *t2) {
         AttributeValue a = (*(Tuple *) t1)[0];
         AttributeValue b = (*(Tuple *) t2)[0];
@@ -199,9 +180,9 @@ private:
                 if (getLongValue(a) == getLongValue(b)) return 0;
                 if (getLongValue(a) > getLongValue(b)) return 1;
             case DOUBLE_ATTRIBUTE_INDEX:
-                if ((long) getdoubleValue(a) < (long) getdoubleValue(b)) return -1;
-                if ((long) getdoubleValue(a) == (long) getdoubleValue(b)) return 0;
-                if ((long) getdoubleValue(a) > (long) getdoubleValue(b)) return 1;
+                if (doubleToLong(getdoubleValue(a)) < doubleToLong(getdoubleValue(b))) return -1;
+                if (doubleToLong(getdoubleValue(a)) == doubleToLong(getdoubleValue(b))) return 0;
+                if (doubleToLong(getdoubleValue(a)) > doubleToLong(getdoubleValue(b))) return 1;
             case STRING_ATTRIBUTE_INDEX:
                 // Nulls are cast to string
                 auto strA = getStringValue(a);
@@ -215,29 +196,7 @@ private:
         return false;
     }
 
-    /* Hash function that returns -1 if input is invalid. */
-    static inline long hash(AttributeValue input, unsigned long hashtableSize) {
-        long hashValue;
-        switch (getAttributeValueType(input)) {
-            case LONG_ATTRIBUTE_INDEX:
-                hashValue = getLongValue(input) & (hashtableSize - 1);
-                break;
-            case DOUBLE_ATTRIBUTE_INDEX:
-                hashValue = ((long) getdoubleValue(input)) & (hashtableSize - 1);
-                break;
-            case STRING_ATTRIBUTE_INDEX:
-                if (getStringValue(input) == getStringValue(nullptr)) {
-                    return -1; // NULL entry
-                }
-                hashValue = ((long) *getStringValue(input)) & (hashtableSize - 1);
-                break;
-            default:
-                hashValue = -1;
-        }
-
-        return hashValue;
-    }
-
+    /* Compares equality of two attributes, taking into account their types. */
     static inline bool attributesAreEqual(AttributeValue a, AttributeValue b) {
 
         size_t typeA = getAttributeValueType(a);
@@ -264,6 +223,29 @@ private:
         }
 
         return false;
+    }
+
+    /* Hash function that returns -1 if input is invalid. */
+    static inline long hash(AttributeValue input, unsigned long hashtableSize) {
+        long hashValue;
+        switch (getAttributeValueType(input)) {
+            case LONG_ATTRIBUTE_INDEX:
+                hashValue = getLongValue(input) & (hashtableSize - 1);
+                break;
+            case DOUBLE_ATTRIBUTE_INDEX:
+                hashValue = ((long) getdoubleValue(input)) & (hashtableSize - 1);
+                break;
+            case STRING_ATTRIBUTE_INDEX:
+                if (getStringValue(input) == getStringValue(nullptr)) {
+                    return -1; // NULL entry
+                }
+                hashValue = ((long) *getStringValue(input)) & (hashtableSize - 1);
+                break;
+            default:
+                hashValue = -1;
+        }
+
+        return hashValue;
     }
 
     static inline int calculateHashtableSize(int n) {
