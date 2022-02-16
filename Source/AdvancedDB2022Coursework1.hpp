@@ -61,7 +61,6 @@ public:
         this->large2 = *large2;
         this->small = *small;
 
-        std::qsort(&this->small[0], this->small.size(), sizeof(Tuple), compareTuples);
         std::qsort(&this->large1[0], this->large1.size(), sizeof(Tuple), compareTuples);
         std::qsort(&this->large2[0], this->large2.size(), sizeof(Tuple), compareTuples);
 
@@ -146,33 +145,13 @@ public:
 
         for (size_t i = 0; i < res2[0].size(); i++) {
             long current_b_sum = 0;
-            for (size_t j = 1; j < res2.size(); j += 2) {
-                switch (getAttributeValueType(res2[j][i])) {
-                    case LONG_ATTRIBUTE_INDEX:
-                        current_b_sum += getLongValue(res2[j][i]);
-                        break;
-                    case DOUBLE_ATTRIBUTE_INDEX:
-                        current_b_sum += (long) getdoubleValue(res2[j][i]);
-                        break;
-                    default:
-                        current_b_sum += 0;
-                }
-            }
+            for (size_t j = 1; j < res2.size(); j += 2)
+                current_b_sum += getLongValue(res2[j][i]);
 
             if (current_b_sum > threshold) {
                 long current_c_multiple = 1;
-                for (size_t j = 2; j < res2.size(); j += 2) {
-                    switch (getAttributeValueType(res2[j][i])) {
-                        case LONG_ATTRIBUTE_INDEX:
-                            current_c_multiple *= getLongValue(res2[j][i]);
-                            break;
-                        case DOUBLE_ATTRIBUTE_INDEX:
-                            current_c_multiple *= (long) getdoubleValue(res2[j][i]);
-                            break;
-                        default:
-                            current_c_multiple += 0;
-                    }
-                }
+                for (size_t j = 2; j < res2.size(); j += 2)
+                    current_c_multiple *= getLongValue(res2[j][i]);
                 sum += current_c_multiple;
             }
         }
@@ -204,7 +183,7 @@ private:
         }
     }
 
-    static int compareTuples(const void *t1, const void *t2) {
+    static inline int compareTuples(const void *t1, const void *t2) {
         AttributeValue a = (*(Tuple *) t1)[0];
         AttributeValue b = (*(Tuple *) t2)[0];
 
@@ -329,8 +308,6 @@ private:
                 continue;
             }
 
-            bool foundFirstInstance = false;
-
             while (std::get<0>(hashtable[hashValue]) != -1) {
                 while (attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
                     res[0].push_back(a[0][i]); // res.a
@@ -341,11 +318,6 @@ private:
                     res[5].push_back(b[1][std::get<1>(hashtable[hashValue])]); // res.b3
                     res[6].push_back(b[2][std::get<1>(hashtable[hashValue])]); // res.c3
                     hashValue = (++hashValue & (hashtableSize - 1));
-                    foundFirstInstance = true;
-                }
-
-                if (foundFirstInstance && !attributesAreEqual(b[0][std::get<1>(hashtable[hashValue])], probeInput)) {
-                    break;
                 }
 
                 hashValue = (++hashValue & (hashtableSize - 1));
