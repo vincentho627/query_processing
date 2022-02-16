@@ -20,9 +20,13 @@ using Column = std::vector<AttributeValue>;
  */
 inline size_t getAttributeValueType(AttributeValue const &value) { return value.index(); }
 
-inline long getLongValue(AttributeValue const &value) { return std::get<long>(value); }
+inline long getLongValue(AttributeValue const &value) {
+    return std::get<long>(value);
+}
 
-inline double getdoubleValue(AttributeValue const &value) { return std::get<double>(value); }
+inline double getdoubleValue(AttributeValue const &value) {
+    return std::get<double>(value);
+}
 
 inline char const *getStringValue(AttributeValue const &value) {
     return std::get<char const *>(value);
@@ -48,7 +52,7 @@ class DBMSImplementationForMarks {
     std::vector<Column> large2DSM;
     std::vector<Column> smallDSM;
 
-public:
+ public:
     void loadData(Relation const *large1,
                   Relation const *large2, // NOLINT(bugprone-easily-swappable-parameters)
                   Relation const *small)  // NOLINT(bugprone-easily-swappable-parameters)
@@ -59,8 +63,14 @@ public:
         this->small = *small;
 
         /* Pre-sort large1 and large2 to use for sort-merge-join later on. */
-        std::qsort(&this->large1[0], this->large1.size(), sizeof(Tuple), compareTuples);
-        std::qsort(&this->large2[0], this->large2.size(), sizeof(Tuple), compareTuples);
+        std::qsort(&this->large1[0],
+                   this->large1.size(),
+                   sizeof(Tuple),
+                   compareTuples);
+        std::qsort(&this->large2[0],
+                   this->large2.size(),
+                   sizeof(Tuple),
+                   compareTuples);
 
         /* Initialise DSM representations of relations. */
         for (int j = 0; j < getNumberOfValuesInTuple(this->large1[0]); j++) {
@@ -80,24 +90,32 @@ public:
 
         /* Build DSM representations. */
         for (int i = 0; i < getNumberOfTuplesInRelation(this->large1); i++) {
-            for (int j = 0; j < getNumberOfValuesInTuple(this->large1[i]); j++) {
-                if (getAttributeValueType(this->large1[i][j]) == LONG_ATTRIBUTE_INDEX) {
+            for (int j = 0; j < getNumberOfValuesInTuple(this->large1[i]);
+                 j++) {
+                if (getAttributeValueType(this->large1[i][j])
+                    == LONG_ATTRIBUTE_INDEX) {
                     large1DSM[j].push_back(getLongValue(this->large1[i][j]));
-                } else if (getAttributeValueType(this->large1[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
+                } else if (getAttributeValueType(this->large1[i][j])
+                    == DOUBLE_ATTRIBUTE_INDEX) {
                     large1DSM[j].push_back(getdoubleValue(this->large1[i][j]));
-                } else if (getAttributeValueType(this->large1[i][j]) == STRING_ATTRIBUTE_INDEX) {
+                } else if (getAttributeValueType(this->large1[i][j])
+                    == STRING_ATTRIBUTE_INDEX) {
                     large1DSM[j].push_back(getStringValue(this->large1[i][j]));
                 }
             }
         }
 
         for (int i = 0; i < getNumberOfTuplesInRelation(this->large2); i++) {
-            for (int j = 0; j < getNumberOfValuesInTuple(this->large2[i]); j++) {
-                if (getAttributeValueType(this->large2[i][j]) == LONG_ATTRIBUTE_INDEX) {
+            for (int j = 0; j < getNumberOfValuesInTuple(this->large2[i]);
+                 j++) {
+                if (getAttributeValueType(this->large2[i][j])
+                    == LONG_ATTRIBUTE_INDEX) {
                     large2DSM[j].push_back(getLongValue(this->large2[i][j]));
-                } else if (getAttributeValueType(this->large2[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
+                } else if (getAttributeValueType(this->large2[i][j])
+                    == DOUBLE_ATTRIBUTE_INDEX) {
                     large2DSM[j].push_back(getdoubleValue(this->large2[i][j]));
-                } else if (getAttributeValueType(this->large2[i][j]) == STRING_ATTRIBUTE_INDEX) {
+                } else if (getAttributeValueType(this->large2[i][j])
+                    == STRING_ATTRIBUTE_INDEX) {
                     large2DSM[j].push_back(getStringValue(this->large2[i][j]));
                 }
             }
@@ -105,11 +123,14 @@ public:
 
         for (int i = 0; i < getNumberOfTuplesInRelation(this->small); i++) {
             for (int j = 0; j < getNumberOfValuesInTuple(this->small[i]); j++) {
-                if (getAttributeValueType(this->small[i][j]) == LONG_ATTRIBUTE_INDEX) {
+                if (getAttributeValueType(this->small[i][j])
+                    == LONG_ATTRIBUTE_INDEX) {
                     smallDSM[j].push_back(getLongValue(this->small[i][j]));
-                } else if (getAttributeValueType(this->small[i][j]) == DOUBLE_ATTRIBUTE_INDEX) {
+                } else if (getAttributeValueType(this->small[i][j])
+                    == DOUBLE_ATTRIBUTE_INDEX) {
                     smallDSM[j].push_back(getdoubleValue(this->small[i][j]));
-                } else if (getAttributeValueType(this->small[i][j]) == STRING_ATTRIBUTE_INDEX) {
+                } else if (getAttributeValueType(this->small[i][j])
+                    == STRING_ATTRIBUTE_INDEX) {
                     smallDSM[j].push_back(getStringValue(this->small[i][j]));
                 }
             }
@@ -156,7 +177,7 @@ public:
         return sum;
     }
 
-private:
+ private:
 
     /* Rounds a double to a long. */
     static inline long doubleToLong(double n) {
@@ -171,27 +192,31 @@ private:
         return attributesAreEqual(a, b);
     }
 
-    /* Compares equality of two attributes, taking into account their types. */
+    /* Compares two attributes, taking into account their types.
+     * Returns -1 if a < b, 0 if a == b, 1 if a > b */
     static inline int attributesAreEqual(AttributeValue a, AttributeValue b) {
-
         size_t typeA = getAttributeValueType(a);
         size_t typeB = getAttributeValueType(b);
 
         if (typeA < typeB) return -1;
         if (typeA > typeB) return 1;
 
-        switch(typeA) {
+        switch (typeA) {
             case LONG_ATTRIBUTE_INDEX:
-                if (getLongValue(a) < getLongValue(b)) return -1;
+                if (getLongValue(a) < getLongValue(b))return -1;
                 if (getLongValue(a) == getLongValue(b)) return 0;
                 if (getLongValue(a) > getLongValue(b)) return 1;
             case DOUBLE_ATTRIBUTE_INDEX:
-                if (doubleToLong(getdoubleValue(a)) < doubleToLong(getdoubleValue(b))) return -1;
-                if (doubleToLong(getdoubleValue(a)) == doubleToLong(getdoubleValue(b))) return 0;
-                if (doubleToLong(getdoubleValue(a)) > doubleToLong(getdoubleValue(b))) return 1;
-            case STRING_ATTRIBUTE_INDEX:
-                // Nulls are cast to string
-                auto strA = getStringValue(a);
+                if (doubleToLong(getdoubleValue(a))
+                    < doubleToLong(getdoubleValue(b)))
+                    return -1;
+                if (doubleToLong(getdoubleValue(a))
+                    == doubleToLong(getdoubleValue(b)))
+                    return 0;
+                if (doubleToLong(getdoubleValue(a))
+                    > doubleToLong(getdoubleValue(b)))
+                    return 1;
+            case STRING_ATTRIBUTE_INDEX:auto strA = getStringValue(a);
                 auto strB = getStringValue(b);
 
                 if (strA < strB) return -1;
@@ -213,16 +238,17 @@ private:
                 hashValue = getLongValue(input) & (hashtableSize - 1);
                 break;
             case DOUBLE_ATTRIBUTE_INDEX:
-                hashValue = doubleToLong(getdoubleValue(input)) & (hashtableSize - 1);
+                hashValue = doubleToLong(getdoubleValue(input))
+                    & (hashtableSize - 1);
                 break;
             case STRING_ATTRIBUTE_INDEX:
                 if (getStringValue(input) == getStringValue(nullptr)) {
                     return -1; // NULL entry
                 }
-                hashValue = ((long) *getStringValue(input)) & (hashtableSize - 1);
+                hashValue =
+                    ((long) *getStringValue(input)) & (hashtableSize - 1);
                 break;
-            default:
-                hashValue = -1;
+            default:hashValue = -1;
         }
 
         return hashValue;
@@ -239,7 +265,9 @@ private:
     }
 
     /* Hashes relation b and joins with relation a, then puts result in res. */
-    static void hashJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
+    static void hashJoin(std::vector<Column> &res,
+                         std::vector<Column> &a,
+                         std::vector<Column> &b) {
         // Over-allocate hashtable by 4
         int hashtableSize = calculateHashtableSize(b[0].size()) << 2;
 
@@ -261,7 +289,8 @@ private:
 
             while (std::get<0>(hashtable[hashValue]))
                 hashValue = (++hashValue & (hashtableSize - 1));
-            hashtable[hashValue] = std::tuple<bool, int>(true, i); // store index of column
+            hashtable[hashValue] =
+                std::tuple<bool, int>(true, i); // Store index of column
         }
 
         // Probe hashtable
@@ -278,6 +307,9 @@ private:
             while (std::get<0>(hashtable[hashValue])) {
                 int index = std::get<1>(hashtable[hashValue]);
 
+                // A faster comparator function can potentially be used here,
+                // at the cost of code duplication since the function here
+                // checks for an ordering instead of just equality.
                 if (attributesAreEqual(b[0][index], probeInput) == 0) {
                     res[0].push_back(a[0][i]); // res.a
                     res[1].push_back(a[1][i]); // res.b1
@@ -294,7 +326,9 @@ private:
     }
 
     /* Joins relations a and b, assuming both are sorted. */
-    static void mergeJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
+    static void mergeJoin(std::vector<Column> &res,
+                          std::vector<Column> &a,
+                          std::vector<Column> &b) {
         long leftI = 0;
         long rightI = 0;
 
@@ -303,17 +337,20 @@ private:
         }
 
         // Pass over nulls
-        while (getAttributeValueType(a[0][leftI]) == 2 && getStringValue(a[0][leftI]) == getStringValue(nullptr)) {
+        while (getAttributeValueType(a[0][leftI]) == 2
+            && getStringValue(a[0][leftI]) == getStringValue(nullptr)) {
             leftI++;
         }
 
-        while (getAttributeValueType(b[0][rightI]) == 2 && getStringValue(b[0][rightI]) == getStringValue(nullptr)) {
+        while (getAttributeValueType(b[0][rightI]) == 2
+            && getStringValue(b[0][rightI]) == getStringValue(nullptr)) {
             rightI++;
         }
 
         // Step through both relations to try and merge them
         while (leftI < a[0].size() && rightI < b[0].size()) {
-            if (getAttributeValueType(a[0][leftI]) == getAttributeValueType(b[0][rightI])) {
+            if (getAttributeValueType(a[0][leftI])
+                == getAttributeValueType(b[0][rightI])) {
 
                 if (getAttributeValueType(a[0][leftI]) == 1) {
                     long aInt = (long) getdoubleValue(a[0][leftI]);
@@ -330,8 +367,8 @@ private:
 
                         // check for dupes in left side
                         while (tempL < a[0].size() && rightI < b[0].size()
-                               && getAttributeValueType(a[0][tempL]) == 1 &&
-                               getAttributeValueType(b[0][rightI]) == 1) {
+                            && getAttributeValueType(a[0][tempL]) == 1 &&
+                            getAttributeValueType(b[0][rightI]) == 1) {
                             long tempA = (long) getdoubleValue(a[0][tempL]);
                             long tempB = (long) getdoubleValue(b[0][rightI]);
                             if (tempA == tempB) {
@@ -392,11 +429,11 @@ private:
                         }
                     }
 
-
                 }
 
             } else {
-                if (getAttributeValueType(a[0][leftI]) < getAttributeValueType(b[0][rightI])) {
+                if (getAttributeValueType(a[0][leftI])
+                    < getAttributeValueType(b[0][rightI])) {
                     leftI++;
                 } else {
                     rightI++;
@@ -404,15 +441,14 @@ private:
             }
         }
 
-
     }
 
 };
 
 class DBMSImplementationForCompetition : public DBMSImplementationForMarks {
-public:
+ public:
     static constexpr char const *teamName =
-            nullptr; // set this to your team name if you mean to compete
+        nullptr; // set this to your team name if you mean to compete
 };
 
 #endif /* ADVANCEDDB2022COURSEWORK1_H */
