@@ -168,6 +168,12 @@ private:
         AttributeValue a = (*(Tuple *) t1)[0];
         AttributeValue b = (*(Tuple *) t2)[0];
 
+        return attributesAreEqual(a, b);
+    }
+
+    /* Compares equality of two attributes, taking into account their types. */
+    static inline int attributesAreEqual(AttributeValue a, AttributeValue b) {
+
         size_t typeA = getAttributeValueType(a);
         size_t typeB = getAttributeValueType(b);
 
@@ -186,43 +192,14 @@ private:
             case STRING_ATTRIBUTE_INDEX:
                 // Nulls are cast to string
                 auto strA = getStringValue(a);
-                auto strB = getStringValue(a);
+                auto strB = getStringValue(b);
 
                 if (strA < strB) return -1;
                 if (strA == strB) return 0;
                 if (strA > strB) return 1;
         }
 
-        return false;
-    }
-
-    /* Compares equality of two attributes, taking into account their types. */
-    static inline bool attributesAreEqual(AttributeValue a, AttributeValue b) {
-
-        size_t typeA = getAttributeValueType(a);
-        size_t typeB = getAttributeValueType(b);
-
-        if (typeA != typeB)
-            return false;
-
-        switch(typeA) {
-            case LONG_ATTRIBUTE_INDEX:
-                return getLongValue(a) == getLongValue(b);
-            case DOUBLE_ATTRIBUTE_INDEX:
-                return doubleToLong(getdoubleValue(a)) == doubleToLong(getdoubleValue(b));
-            case STRING_ATTRIBUTE_INDEX:
-                // Nulls are cast to string
-                auto strA = getStringValue(a);
-                auto strB = getStringValue(a);
-
-                if (strA == getStringValue(nullptr) ||
-                    strB == getStringValue(nullptr))
-                    return false;
-
-                return strA == strB;
-        }
-
-        return false;
+        return 1;
     }
 
     /* Hash function that returns -1 if input is invalid. */
@@ -301,7 +278,7 @@ private:
             while (std::get<0>(hashtable[hashValue])) {
                 int index = std::get<1>(hashtable[hashValue]);
 
-                if (attributesAreEqual(b[0][index], probeInput)) {
+                if (attributesAreEqual(b[0][index], probeInput) == 0) {
                     res[0].push_back(a[0][i]); // res.a
                     res[1].push_back(a[1][i]); // res.b1
                     res[2].push_back(a[2][i]); // res.c1
@@ -316,24 +293,25 @@ private:
         }
     }
 
+    /* Joins relations a and b, assuming both are sorted. */
     static void mergeJoin(std::vector<Column> &res, std::vector<Column> &a, std::vector<Column> &b) {
-        auto leftI = 0;
-        auto rightI = 0;
+        long leftI = 0;
+        long rightI = 0;
 
         if (a[0].empty() || b[0].empty()) {
             return;
         }
 
-        // passing over the nulls
+        // Pass over nulls
         while (getAttributeValueType(a[0][leftI]) == 2 && getStringValue(a[0][leftI]) == getStringValue(nullptr)) {
             leftI++;
         }
 
-        // passing over the nulls
         while (getAttributeValueType(b[0][rightI]) == 2 && getStringValue(b[0][rightI]) == getStringValue(nullptr)) {
             rightI++;
         }
 
+        // Step through both relations to try and merge them
         while (leftI < a[0].size() && rightI < b[0].size()) {
             if (getAttributeValueType(a[0][leftI]) == getAttributeValueType(b[0][rightI])) {
 
